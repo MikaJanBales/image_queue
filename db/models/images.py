@@ -1,6 +1,6 @@
 from sqlalchemy import Integer, Column, DateTime
 
-from db.config.postgres_utils import Base
+from db.config import Base
 
 
 class Image(Base):
