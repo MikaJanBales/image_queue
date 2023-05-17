@@ -12,12 +12,12 @@ from db.models.images import Image
 def enqueue_images(event, redis_conn, folder_path):
     for filename in os.listdir(folder_path):
 
-        # Получение размера изображения в байтах
+        # Getting the size of the image in bytes
         if filename.endswith((".jpg", ".png")):
             image_path = os.path.join(folder_path, filename)
             image_bytes = os.path.getsize(image_path)
 
-            # Запись изображения в Redis очередь
+            # Record the image in the Redis queue
             redis_conn.rpush(redis_queue_name, image_bytes)
 
             logging.info(f"Added image {filename} to Redis queue")
@@ -25,33 +25,32 @@ def enqueue_images(event, redis_conn, folder_path):
         else:
             logging.warning("Фото не передались в брокер", exc_info=True)
 
-        # Во избежание задержек
-        time.sleep(1)
+        time.sleep(0.1)
 
-    # Переменная для окончания работы другого потока
+    # Variable for the end of another thread
     event.set()
 
 
 def dequeue_images(event, redis_conn):
     while True:
-        # Окончание работы потока
+        # End of flow operation
         if event.is_set():
             logging.info("Done")
             break
 
-        # Извлечение изображения из Redis очереди
+        # Extracting an image from the Redis queue
         image_bytes = redis_conn.lpop(redis_queue_name)
 
-        # Если очередь пуста, подождать некоторое время
+        # If the queue is empty, wait a while
         if not image_bytes:
-            time.sleep(1)
+            time.sleep(0.1)
             continue
 
-        # Получение текущего времени и размера изображения
+        # Getting the current time and image size
         current_time = time.strftime("%Y-%m-%d %H:%M:%S")
         image_size = int(image_bytes)
 
-        # Запись в базу данных Postgres
+        # Writing to the Postgres database
         try:
             image = Image(
                 time=current_time,

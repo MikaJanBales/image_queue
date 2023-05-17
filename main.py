@@ -10,31 +10,30 @@ image_folder = "./image_folder"
 
 
 def main():
-    # Подключение логирование
+    # Connecting Logging
     setup_logging()
 
-    # Создание таблицу в бд Postgres
+    # Creating a table in a Postgres database
     Base.metadata.create_all(bind=engine)
 
-    # Создание события для синхронизации потоков
+    # Creating an event to synchronize threads
     event = threading.Event()
 
-    # Создание потока для чтения изображений и добавления их в Redis
+    # Creating a thread to read images and add them to Redis
     image_enqueue_thread = threading.Thread(target=enqueue_images,
                                             args=(
                                                 event, redis_conn,
                                                 image_folder))
 
-    # Создание потока для извлечения изображений из Redis
-    # и записи их в Postgres
+    # Creating a stream to extract images from Redis and write them to Postgres
     image_dequeue_thread = threading.Thread(target=dequeue_images,
                                             args=(event, redis_conn))
 
-    # Запуск потоков
+    # Starting threads
     image_enqueue_thread.start()
     image_dequeue_thread.start()
 
-    # Ожидание завершения потоков
+    # Waiting for threads to complete
     image_enqueue_thread.join()
     image_dequeue_thread.join()
 
