@@ -25,8 +25,8 @@ def enqueue_images(event, redis_conn, folder_path):
         else:
             logging.warning("Фото не передались в брокер", exc_info=True)
 
-    # Во избежание задержек
-    time.sleep(5)
+        # Во избежание задержек
+        time.sleep(1)
 
     # Переменная для окончания работы другого потока
     event.set()
@@ -34,12 +34,17 @@ def enqueue_images(event, redis_conn, folder_path):
 
 def dequeue_images(event, redis_conn):
     while True:
+        # Окончание работы потока
+        if event.is_set():
+            logging.info("Done")
+            break
+
         # Извлечение изображения из Redis очереди
         image_bytes = redis_conn.lpop(redis_queue_name)
 
         # Если очередь пуста, подождать некоторое время
         if not image_bytes:
-            time.sleep(5)
+            time.sleep(1)
             continue
 
         # Получение текущего времени и размера изображения
@@ -62,7 +67,3 @@ def dequeue_images(event, redis_conn):
         logging.info(
             f"Saved image to Postgres at {current_time} with size {image_size} bytes")
 
-        # Окончание работы потока
-        if event.is_set():
-            logging.info("Done")
-            break

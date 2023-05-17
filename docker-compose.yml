@@ -1,6 +1,6 @@
 version: "3.9"
 services:
-  main:
+  web:
     build:
       context: .
       dockerfile: Dockerfile
@@ -14,12 +14,15 @@ services:
       - redis
   db:
     image: postgres:latest
+    restart: always
     environment:
       POSTGRES_USER: image
       POSTGRES_PASSWORD: image
       POSTGRES_DB: image
     ports:
       - "5432:5432"
+    volumes:
+      - ./data:/var/lib/postgresql/data
   redis:
     image: redis
     ports:
